@@ -1,0 +1,91 @@
+groups:
+  - name: ecommerce_alerts
+    interval: 30s
+    rules:
+      # HTTP 错误率告警 / HTTP Error Rate Alert
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "高 HTTP 错误率 / High HTTP error rate"
+          description: "HTTP 5xx 错误率超过 5% (当前: {{ $value | humanizePercentage }})"
+
+      # 高延迟告警 / High Latency Alert
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "API 响应延迟过高 / High API latency"
+          description: "P95 响应延迟超过 1 秒 (当前: {{ $value | humanizeDuration }})"
+
+      # 服务不可用告警 / Service Down Alert
+      - alert: ServiceDown
+        expr: up{job="ecommerce-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "后端服务不可用 / Backend service is down"
+          description: "{{ $labels.instance }} 已下线超过 1 分钟"
+
+      # 高内存使用告警 / High Memory Alert
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes{pod=~"ecommerce-backend.*"} / container_spec_memory_limit_bytes{pod=~"ecommerce-backend.*"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "后端服务内存使用率过高 / High memory usage"
+          description: "{{ $labels.pod }} 内存使用率: {{ $value | humanizePercentage }}"
+
+      # 数据库连接告警 / Database Connection Alert
+      - alert: DatabaseConnectionPoolExhausted
+        expr: database_connections_active{database="ecommerce"} > 18
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "数据库连接池接近耗尽 / Database connection pool nearly exhausted"
+          description: "当前活跃连接: {{ $value }}"
+
+      # 订单创建失败告警 / Order Creation Failed Alert
+      - alert: OrderCreationFailed
+        expr: sum(rate(http_requests_total{route="/api/v1/orders", status="400"}[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "订单创建失败率过高 / High order creation failure rate"
+          description: "订单创建 400 错误率过高"
+
+      # Redis 内存告警 / Redis Memory Alert
+      - alert: RedisHighMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Redis 内存使用率过高 / Redis memory usage high"
+          description: "Redis 内存使用率: {{ $value | humanizePercentage }}"
+
+      # Elasticsearch 集群健康告警 / ES Cluster Health Alert
+      - alert: ElasticsearchUnhealthy
+        expr: elasticsearch_cluster_health_status{cluster="ecommerce"} != "green"
+        for: 3m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Elasticsearch 集群不健康 / Elasticsearch cluster unhealthy"
+          description: "ES 集群状态: {{ $value }}"

@@ -1,0 +1,37 @@
+{
+  "annotations": { "list": [{ "builtIn": 1, "datasource": "-- Grafana --", "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" }] },
+  "editable": true, "gnetId": null, "graphTooltip": 0, "id": null, "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus", "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }, "unit": "percent" } },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 }, "id": 1,
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [{ "expr": "up{job=~\"ecommerce.*\"}", "legendFormat": "{{job}}", "refId": "A" }],
+      "title": "服务可用性 / Service Availability", "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus", "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 0 }, "id": 2,
+      "targets": [{ "expr": "sum(container_memory_usage_bytes{pod=~\"ecommerce.*\"}) by (pod)", "legendFormat": "{{pod}}", "refId": "A" }],
+      "title": "内存使用 / Memory Usage", "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus", "fieldConfig": { "defaults": { "unit": "percent" } },
+      "gridPos": { "h": 8, "w": 18, "x": 0, "y": 8 }, "id": 3,
+      "targets": [{ "expr": "rate(container_cpu_usage_seconds_total{pod=~\"ecommerce.*\"}[5m]) * 100", "legendFormat": "{{pod}}", "refId": "A" }],
+      "title": "CPU 使用率 / CPU Usage", "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus", "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 8, "w": 12, "x": 18, "y": 8 }, "id": 4,
+      "targets": [{ "expr": "rate(container_network_receive_bytes_total{pod=~\"ecommerce.*\"}[5m])", "legendFormat": "{{pod}} in", "refId": "A" }, { "expr": "rate(container_network_transmit_bytes_total{pod=~\"ecommerce.*\"}[5m])", "legendFormat": "{{pod}} out", "refId": "B" }],
+      "title": "网络流量 / Network I/O", "type": "timeseries"
+    }
+  ],
+  "refresh": "30s", "schemaVersion": 36, "style": "dark",
+  "tags": ["ecommerce", "infrastructure"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "E-commerce Infrastructure / 基础设施监控",
+  "uid": "ecommerce-infrastructure", "version": 1
+}
